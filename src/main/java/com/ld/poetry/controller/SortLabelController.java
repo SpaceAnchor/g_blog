@@ -109,7 +109,7 @@ public class SortLabelController {
         if (!StringUtils.hasText(label.getLabelName())
 //                || !StringUtils.hasText(label.getLabelDescription())
          || label.getSortId() == null) {
-            return PoetryResult.fail("标签名称和分类Id不能为空！");
+            return PoetryResult.fail("标签名称和分类Id不能为空！ ");
         }
         labelMapper.insert(label);
         PoetryCache.remove(CommonConst.SORT_INFO);
