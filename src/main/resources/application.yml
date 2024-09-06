@@ -25,7 +25,7 @@ spring:
       max-request-size: 100MB
 
   mail:
-    host: smtp.qq.com
+    host: smtp.163.com
     username:
     password:
     default-encoding: utf-8
@@ -39,6 +39,7 @@ spring:
             class: javax.net.ssl.SSLSocketFactory
           ssl:
             enable: true
+
 user:
   code:
     format:

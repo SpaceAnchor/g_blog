@@ -1,6 +1,6 @@
 package com.ld.poetry.im.websocket;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.ld.poetry.entity.User;
 import com.ld.poetry.im.http.entity.ImChatGroupUser;

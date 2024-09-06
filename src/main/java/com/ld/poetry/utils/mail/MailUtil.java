@@ -1,9 +1,8 @@
 package com.ld.poetry.utils.mail;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 import com.ld.poetry.constants.CommonConst;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -11,6 +10,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import javax.mail.MessagingException;
 import java.util.Date;
 import java.util.List;
@@ -18,6 +18,14 @@ import java.util.List;
 @Component
 @Slf4j
 public class MailUtil {
+
+    @Resource
+    private JavaMailSender mailSender;
+
+    @Value("${spring.mail.username}")
+    private String sendMailer;
+    @Value("${website.domain}")
+    private String DOMAIN_NAME;
 
     /**
      * 1. 来源人名
@@ -45,13 +53,8 @@ public class MailUtil {
     public static final String imMail = "你收到来自 %s 的消息";
     public static final String notificationMail = "你收到来自 %s 的订阅";
 
-    @Autowired
-    private JavaMailSender mailSender;
-
-    @Value("${spring.mail.username}")
-    private String sendMailer;
-
     /**
+     * 参数：
      * 1. 网站名称
      * 2. 邮件类型
      * 3. 发件人
@@ -63,6 +66,8 @@ public class MailUtil {
 
     @PostConstruct
     public void init() {
+        log.error("sendMailer is:" + sendMailer);
+        log.error("DOMAIN_NAME is:" + DOMAIN_NAME);
         this.mailText = "<div style=\"font-family: serif;line-height: 22px;padding: 30px\">\n" +
                 "    <div style=\"display: flex;flex-direction: column;align-items: center\">\n" +
                 "        <div style=\"margin: 10px auto 20px;text-align: center\">\n" +
@@ -86,7 +91,7 @@ public class MailUtil {
                 "            </div>\n" +
                 "            %s\n" +
                 "            <a style=\"width: 150px;height: 38px;background: #ef859d38;border-radius: 32px;display: flex;align-items: center;justify-content: center;text-decoration: none;margin: 40px auto 0\"\n" +
-                "               href=\"https://poetize.cn\" target=\"_blank\">\n" +
+                "               href=\"" + DOMAIN_NAME + "\" target=\"_blank\">\n" +
                 "                <span style=\"color: #DB214B\">有朋自远方来</span>\n" +
                 "            </a>\n" +
                 "        </div>\n" +
@@ -102,7 +107,7 @@ public class MailUtil {
     }
 
     @Async
-    public void sendMailMessage(List<String> to, String subject, String text) {
+    public Boolean sendMailMessage(List<String> to, String subject, String text) {
         log.info("发送邮件===================");
         log.info("to：{}", JSON.toJSONString(to));
         log.info("subject：{}", subject);
@@ -125,9 +130,11 @@ public class MailUtil {
             mailSender.send(mimeMessageHelper.getMimeMessage());
 
             log.info("发送成功==================");
+            return true;
         } catch (MessagingException e) {
             log.info("发送失败==================");
             log.error(e.getMessage());
+            return false;
         }
     }
 }

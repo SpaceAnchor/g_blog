@@ -13,6 +13,7 @@ import com.ld.poetry.utils.PoetryUtil;
 import com.ld.poetry.utils.cache.PoetryCache;
 import com.ld.poetry.vo.CommentVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -30,6 +31,9 @@ public class MailSendUtil {
 
     @Autowired
     private MailUtil mailUtil;
+
+    @Value("${website.name}")
+    private String DEFAULT_WEB_NAME;
 
     public void sendCommentMail(CommentVO commentVO, Article one, CommentService commentService) {
         List<String> mail = new ArrayList<>();
@@ -69,7 +73,7 @@ public class MailSendUtil {
             AtomicInteger count = (AtomicInteger) PoetryCache.get(CommonConst.COMMENT_IM_MAIL + mail.get(0));
             if (count == null || count.get() < CommonConst.COMMENT_IM_MAIL_COUNT) {
                 WebInfo webInfo = (WebInfo) PoetryCache.get(CommonConst.WEB_INFO);
-                mailUtil.sendMailMessage(mail, "您有一封来自" + (webInfo == null ? "POETIZE" : webInfo.getWebName()) + "的回执！", commentMail);
+                mailUtil.sendMailMessage(mail, "您有一封来自" + (webInfo == null ? DEFAULT_WEB_NAME : webInfo.getWebName()) + "的邮件！", commentMail);
                 if (count == null) {
                     PoetryCache.put(CommonConst.COMMENT_IM_MAIL + mail.get(0), new AtomicInteger(1), CommonConst.CODE_EXPIRE);
                 } else {
@@ -86,7 +90,7 @@ public class MailSendUtil {
      */
     private String getCommentMail(String commentType, String source, String fromName, String fromContent, String toName, Integer toCommentId, CommentService commentService) {
         WebInfo webInfo = (WebInfo) PoetryCache.get(CommonConst.WEB_INFO);
-        String webName = (webInfo == null ? "POETIZE" : webInfo.getWebName());
+        String webName = (webInfo == null ? DEFAULT_WEB_NAME : webInfo.getWebName());
 
         String mailType = "";
         String toMail = "";
@@ -134,7 +138,7 @@ public class MailSendUtil {
                 AtomicInteger count = (AtomicInteger) PoetryCache.get(CommonConst.COMMENT_IM_MAIL + mail.get(0));
                 if (count == null || count.get() < CommonConst.COMMENT_IM_MAIL_COUNT) {
                     WebInfo webInfo = (WebInfo) PoetryCache.get(CommonConst.WEB_INFO);
-                    mailUtil.sendMailMessage(mail, "您有一封来自" + (webInfo == null ? "POETIZE" : webInfo.getWebName()) + "的回执！", commentMail);
+                    mailUtil.sendMailMessage(mail, "您有一封来自" + (webInfo == null ? DEFAULT_WEB_NAME : webInfo.getWebName()) + "的邮件！", commentMail);
                     if (count == null) {
                         PoetryCache.put(CommonConst.COMMENT_IM_MAIL + mail.get(0), new AtomicInteger(1), CommonConst.CODE_EXPIRE);
                     } else {
@@ -147,7 +151,7 @@ public class MailSendUtil {
 
     private String getImMail(String fromName, String fromContent) {
         WebInfo webInfo = (WebInfo) PoetryCache.get(CommonConst.WEB_INFO);
-        String webName = (webInfo == null ? "POETIZE" : webInfo.getWebName());
+        String webName = (webInfo == null ? DEFAULT_WEB_NAME : webInfo.getWebName());
 
         return String.format(mailUtil.getMailText(),
                 webName,

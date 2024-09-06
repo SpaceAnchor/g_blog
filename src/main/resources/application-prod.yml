@@ -5,3 +5,7 @@ spring:
     url: jdbc:mysql://localhost:3306/poetize?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
+
+website:
+  domain: https://www.kaifanba.top/
+  name: 小管笔记

@@ -1,7 +1,7 @@
 package com.ld.poetry.service.impl;
 
 import cn.hutool.crypto.SecureUtil;
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -66,6 +66,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Value("${user.subscribe.format}")
     private String subscribeFormat;
 
+    @Value("${website.name")
+    private String DEFAULT_WEB_NAME;
+
     @Override
     public PoetryResult saveArticle(ArticleVO articleVO) {
         if (articleVO.getViewStatus() != null && !articleVO.getViewStatus() && !StringUtils.hasText(articleVO.getPassword())) {
@@ -107,7 +110,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                     Label label = wrapper.select(Label::getLabelName).eq(Label::getId, articleVO.getLabelId()).one();
                     String text = getSubscribeMail(label.getLabelName(), articleVO.getArticleTitle());
                     WebInfo webInfo = (WebInfo) PoetryCache.get(CommonConst.WEB_INFO);
-                    mailUtil.sendMailMessage(emails, "您有一封来自" + (webInfo == null ? "POETIZE" : webInfo.getWebName()) + "的回执！", text);
+                    mailUtil.sendMailMessage(emails, "您有一封来自" + (webInfo == null ? DEFAULT_WEB_NAME : webInfo.getWebName()) + "的邮件！", text);
                 }
             }
         } catch (Exception e) {
@@ -118,7 +121,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     private String getSubscribeMail(String labelName, String articleTitle) {
         WebInfo webInfo = (WebInfo) PoetryCache.get(CommonConst.WEB_INFO);
-        String webName = (webInfo == null ? "POETIZE" : webInfo.getWebName());
+        String webName = (webInfo == null ? DEFAULT_WEB_NAME : webInfo.getWebName());
         return String.format(mailUtil.getMailText(),
                 webName,
                 String.format(MailUtil.notificationMail, PoetryUtil.getAdminUser().getUsername()),
