@@ -1,6 +1,7 @@
 package com.ld.poetry.vo;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ld.poetry.entity.Article;
 import com.ld.poetry.entity.Label;
 import com.ld.poetry.entity.Sort;
 import lombok.Data;
@@ -9,6 +10,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 public class ArticleVO {
@@ -56,12 +59,15 @@ public class ArticleVO {
     private Integer sortId;
 
     @NotNull(message = "文章标签不能为空")
-    private Integer labelId;
+    private Integer label1Id;
+
+    private Integer label2Id;
+    private Integer label3Id;
 
     // 需要查询封装
     private Integer commentCount;
     private String username;
     private Sort sort;
-    private Label label;
+    private List<Label> labels;
     private Boolean hasVideo = false;
 }

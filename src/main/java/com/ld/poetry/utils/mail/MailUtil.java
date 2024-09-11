@@ -66,8 +66,6 @@ public class MailUtil {
 
     @PostConstruct
     public void init() {
-        log.error("sendMailer is:" + sendMailer);
-        log.error("DOMAIN_NAME is:" + DOMAIN_NAME);
         this.mailText = "<div style=\"font-family: serif;line-height: 22px;padding: 30px\">\n" +
                 "    <div style=\"display: flex;flex-direction: column;align-items: center\">\n" +
                 "        <div style=\"margin: 10px auto 20px;text-align: center\">\n" +

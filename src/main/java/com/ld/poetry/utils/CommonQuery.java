@@ -234,9 +234,8 @@ public class CommonQuery {
                         List<Label> labels = wrapper.eq(Label::getSortId, sort.getId()).list();
                         if (!CollectionUtils.isEmpty(labels)) {
                             labels.forEach(label -> {
-                                LambdaQueryChainWrapper<Article> labelWrapper = new LambdaQueryChainWrapper<>(articleMapper);
-                                Integer countOfLabel = labelWrapper.eq(Article::getLabelId, label.getId()).count();
-                                label.setCountOfLabel(countOfLabel);
+                                int size = articleMapper.selectByLabelId(Long.valueOf(label.getId())).size();
+                                label.setCountOfLabel(size);
                             });
                             sort.setLabels(labels);
                         }

@@ -43,8 +43,14 @@ public class Article implements Serializable {
     /**
      * 标签ID
      */
-    @TableField("label_id")
-    private Integer labelId;
+    @TableField("label1_id")
+    private Integer label1Id;
+
+    @TableField("label2_id")
+    private Integer label2Id;
+
+    @TableField("label3_id")
+    private Integer label3Id;
 
     /**
      * 封面

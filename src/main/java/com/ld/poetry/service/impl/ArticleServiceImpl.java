@@ -2,6 +2,7 @@ package com.ld.poetry.service.impl;
 
 import cn.hutool.crypto.SecureUtil;
 import com.alibaba.fastjson2.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -91,12 +92,18 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         article.setArticleTitle(articleVO.getArticleTitle());
         article.setArticleContent(articleVO.getArticleContent());
         article.setSortId(articleVO.getSortId());
-        article.setLabelId(articleVO.getLabelId());
+        article.setLabel1Id(articleVO.getLabel1Id());
+        article.setLabel2Id(articleVO.getLabel2Id());
+        article.setLabel3Id(articleVO.getLabel3Id());
         article.setUserId(PoetryUtil.getUserId());
         save(article);
 
         PoetryCache.remove(CommonConst.SORT_INFO);
 
+        /*
+         TODO in the future, maybe...
+         // 给专栏订阅者发邮件
+         // old version
         try {
             if (articleVO.getViewStatus()) {
                 List<User> users = userService.lambdaQuery().select(User::getEmail, User::getSubscribe).eq(User::getUserStatus, PoetryEnum.STATUS_ENABLE.getCode()).list();
@@ -116,9 +123,33 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         } catch (Exception e) {
             log.error("订阅邮件发送失败：", e);
         }
+
+        // TODO version
+
+                try {
+                    if (articleVO.getViewStatus()) {
+                        List<User> users = userService.lambdaQuery().select(User::getEmail, User::getSubscribe).eq(User::getUserStatus, PoetryEnum.STATUS_ENABLE.getCode()).list();
+                        List<String> emails = users.stream().filter(u -> {
+                            List<Integer> sub = JSON.parseArray(u.getSubscribe(), Integer.class);
+                            return !CollectionUtils.isEmpty(sub) && sub.contains(articleVO.getLabel1Id());
+                        }).map(User::getEmail).collect(Collectors.toList());
+
+                        if (!CollectionUtils.isEmpty(emails)) {
+                            LambdaQueryChainWrapper<Label> wrapper = new LambdaQueryChainWrapper<>(labelMapper);
+                            Label label = wrapper.select(Label::getLabelName).eq(Label::getId, articleVO.getLabel1Id()).one();
+                            String text = getSubscribeMail(label.getLabelName(), articleVO.getArticleTitle());
+                            WebInfo webInfo = (WebInfo) PoetryCache.get(CommonConst.WEB_INFO);
+                            mailUtil.sendMailMessage(emails, "您有一封来自" + (webInfo == null ? DEFAULT_WEB_NAME : webInfo.getWebName()) + "的邮件！", text);
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("订阅邮件发送失败：", e);
+                }
+        */
         return PoetryResult.success();
     }
 
+    // TODO this method has not been called anywhere
     private String getSubscribeMail(String labelName, String articleTitle) {
         WebInfo webInfo = (WebInfo) PoetryCache.get(CommonConst.WEB_INFO);
         String webName = (webInfo == null ? DEFAULT_WEB_NAME : webInfo.getWebName());
@@ -151,7 +182,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         LambdaUpdateChainWrapper<Article> updateChainWrapper = lambdaUpdate()
                 .eq(Article::getId, articleVO.getId())
                 .eq(Article::getUserId, userId)
-                .set(Article::getLabelId, articleVO.getLabelId())
+                .set(Article::getLabel1Id, articleVO.getLabel1Id())
+                .set(Article::getLabel2Id, articleVO.getLabel2Id())
+                .set(Article::getLabel3Id, articleVO.getLabel3Id())
                 .set(Article::getSortId, articleVO.getSortId())
                 .set(Article::getArticleTitle, articleVO.getArticleTitle())
                 .set(Article::getUpdateBy, PoetryUtil.getUsername())
@@ -175,9 +208,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (articleVO.getViewStatus() != null) {
             updateChainWrapper.set(Article::getViewStatus, articleVO.getViewStatus());
         }
-        updateChainWrapper.update();
+        boolean update = updateChainWrapper.update();
         PoetryCache.remove(CommonConst.SORT_INFO);
-        return PoetryResult.success();
+        if (update) return PoetryResult.success();
+        else return PoetryResult.fail("更新遇到问题");
     }
 
     @Override
@@ -200,7 +234,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
 
         if (baseRequestVO.getLabelId() != null) {
-            lambdaQuery.eq(Article::getLabelId, baseRequestVO.getLabelId());
+            lambdaQuery.and(wrapper -> wrapper.eq(Article::getLabel1Id, baseRequestVO.getLabelId())
+                .or().eq(Article::getLabel2Id, baseRequestVO.getLabelId())
+                    .or().eq(Article::getLabel3Id, baseRequestVO.getLabelId())
+            );
         } else if (baseRequestVO.getSortId() != null) {
             lambdaQuery.eq(Article::getSortId, baseRequestVO.getSortId());
         }
@@ -282,7 +319,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
 
         if (baseRequestVO.getLabelId() != null) {
-            lambdaQuery.eq(Article::getLabelId, baseRequestVO.getLabelId());
+            Integer labelId = baseRequestVO.getLabelId();
+            lambdaQuery
+                    .and(wrapper -> wrapper.eq(Article::getLabel1Id, labelId)
+                        .or().eq(Article::getLabel2Id, labelId)
+                        .or().eq(Article::getLabel3Id, labelId))
+                    .list();
         }
 
         if (baseRequestVO.getSortId() != null) {
@@ -295,8 +337,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (!CollectionUtils.isEmpty(records)) {
             List<ArticleVO> collect = records.stream().map(article -> {
                 article.setPassword(null);
-                ArticleVO articleVO = buildArticleVO(article, true);
-                return articleVO;
+                return buildArticleVO(article, true);
             }).collect(Collectors.toList());
             baseRequestVO.setRecords(collect);
         }
@@ -311,8 +352,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (article == null) {
             return PoetryResult.fail("文章不存在！");
         }
-        ArticleVO articleVO = new ArticleVO();
-        BeanUtils.copyProperties(article, articleVO);
+        ArticleVO articleVO = buildArticleVO(article, PoetryUtil.getCurrentUser().getUserType() == PoetryEnum.USER_TYPE_ADMIN.getCode());
         return PoetryResult.success(articleVO);
     }
 
@@ -382,29 +422,23 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             articleVO.setCommentCount(0);
         }
 
-        List<Sort> sortInfo = commonQuery.getSortInfo();
-        if (!CollectionUtils.isEmpty(sortInfo)) {
-            for (Sort s : sortInfo) {
-                if (s.getId().intValue() == articleVO.getSortId().intValue()) {
-                    Sort sort = new Sort();
-                    BeanUtils.copyProperties(s, sort);
-                    sort.setLabels(null);
-                    articleVO.setSort(sort);
-                    if (!CollectionUtils.isEmpty(s.getLabels())) {
-                        for (int j = 0; j < s.getLabels().size(); j++) {
-                            Label l = s.getLabels().get(j);
-                            if (l.getId().intValue() == articleVO.getLabelId().intValue()) {
-                                Label label = new Label();
-                                BeanUtils.copyProperties(l, label);
-                                articleVO.setLabel(label);
-                                break;
-                            }
-                        }
-                    }
-                    break;
-                }
-            }
+        Sort sort = sortMapper.selectOne(new LambdaQueryWrapper<Sort>().eq(Sort::getId, articleVO.getSortId()));
+        sort.setLabels(null);
+        articleVO.setSort(sort);
+        Integer label1Id = articleVO.getLabel1Id();
+        Integer label2Id = articleVO.getLabel2Id();
+        Integer label3Id = articleVO.getLabel3Id();
+        List<Label> l_list = new ArrayList<>();
+        if (label1Id != null){
+            l_list.add(labelMapper.selectOne(new LambdaQueryWrapper<Label>().eq(Label::getId, label1Id)));
         }
+        if (label2Id != null){
+            l_list.add(labelMapper.selectOne(new LambdaQueryWrapper<Label>().eq(Label::getId, label2Id)));
+        }
+        if (label3Id != null){
+            l_list.add(labelMapper.selectOne(new LambdaQueryWrapper<Label>().eq(Label::getId, label3Id)));
+        }
+        articleVO.setLabels(l_list);
         return articleVO;
     }
 }

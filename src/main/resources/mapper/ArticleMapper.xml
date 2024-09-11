@@ -7,7 +7,9 @@
         <id column="id" property="id"/>
         <result column="user_id" property="userId"/>
         <result column="sort_id" property="sortId"/>
-        <result column="label_id" property="labelId"/>
+        <result column="label1_id" property="label1Id"/>
+        <result column="label2_id" property="label2Id"/>
+        <result column="label3_id" property="label3Id"/>
         <result column="article_cover" property="articleCover"/>
         <result column="article_title" property="articleTitle"/>
         <result column="article_content" property="articleContent"/>
@@ -27,7 +29,19 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id, user_id, sort_id, label_id, article_cover, article_title, video_url, article_content, password, tips, view_status, recommend_status, view_count, like_count, comment_status, create_time, update_time, update_by, deleted
+        id, user_id, sort_id, label1_id, label2_id, label3_id, article_cover, article_title, video_url, article_content, password, tips, view_status, recommend_status, view_count, like_count, comment_status, create_time, update_time, update_by, deleted
     </sql>
+
+    <!-- 根据标签ID查询文章 -->
+    <select id="selectByLabelId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        article
+        WHERE
+        label1_id = #{labelId}
+        OR label2_id = #{labelId}
+        OR label3_id = #{labelId}
+    </select>
 
 </mapper>

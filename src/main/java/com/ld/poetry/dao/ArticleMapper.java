@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * <p>
  * 文章表 Mapper 接口
@@ -19,4 +21,6 @@ public interface ArticleMapper extends BaseMapper<Article> {
 
     @Update("update article set view_count=view_count+1 where id=#{id}")
     int updateViewCount(@Param("id") Integer id);
+
+    List<Article> selectByLabelId(@Param("labelId") Long labelId);
 }
